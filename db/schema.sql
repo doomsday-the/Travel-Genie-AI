@@ -1,0 +1,3 @@
+-- Reference export. Regenerate with:
+--   mysqldump --no-data -u USER -p travelgenie > db/schema.sql
+-- Source of truth is the Django migrations.

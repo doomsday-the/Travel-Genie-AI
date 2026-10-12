@@ -1,0 +1,31 @@
+services:
+  db:
+    image: mysql:8
+    env_file: .env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  backend:
+    build: ./backend
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+volumes:
+  dbdata:

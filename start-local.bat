@@ -34,4 +34,8 @@ echo.
 
 start "TravelGenie Backend (Django)" cmd /k "set USE_SQLITE=True && python manage.py runserver 0.0.0.0:8000"
 cd ..\frontend
+if not exist "node_modules" (
+    echo [Frontend] Installing node dependencies...
+    call npm install
+)
 start "TravelGenie Frontend (Vite)" cmd /k "npm run dev"

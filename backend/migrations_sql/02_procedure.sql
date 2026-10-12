@@ -1,19 +1,19 @@
-DROP PROCEDURE IF EXISTS sp_trip_budget_summary;
-DELIMITER //
-CREATE PROCEDURE sp_trip_budget_summary(IN p_trip_id BIGINT)
+-- PostgreSQL Function returning category-level budget summary
+CREATE OR REPLACE FUNCTION sp_trip_budget_summary(p_trip_id BIGINT)
+RETURNS TABLE(category VARCHAR, total NUMERIC, entries BIGINT) AS $$
 BEGIN
+    RETURN QUERY
     SELECT e.category, SUM(e.amount) AS total, COUNT(*) AS entries
     FROM expenses e
     WHERE e.trip_id = p_trip_id
     GROUP BY e.category
     ORDER BY total DESC;
-END //
-DELIMITER ;
+END;
+$$ LANGUAGE plpgsql;
 
-DROP PROCEDURE IF EXISTS sp_trip_budget_report;
-DELIMITER //
-CREATE PROCEDURE sp_trip_budget_report(IN p_trip_id BIGINT)
+CREATE OR REPLACE FUNCTION sp_trip_budget_report(p_trip_id BIGINT)
+RETURNS TABLE(category VARCHAR, total NUMERIC, entries BIGINT) AS $$
 BEGIN
-    CALL sp_trip_budget_summary(p_trip_id);
-END //
-DELIMITER ;
+    RETURN QUERY SELECT * FROM sp_trip_budget_summary(p_trip_id);
+END;
+$$ LANGUAGE plpgsql;

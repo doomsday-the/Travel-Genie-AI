@@ -34,7 +34,7 @@ TEMPLATES = [{
 
 USE_SQLITE = config("USE_SQLITE", default=False, cast=bool)
 
-if USE_SQLITE or not config("DB_NAME", default=""):
+if USE_SQLITE:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -44,13 +44,12 @@ if USE_SQLITE or not config("DB_NAME", default=""):
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": config("DB_NAME"),
-            "USER": config("DB_USER"),
-            "PASSWORD": config("DB_PASSWORD"),
+            "ENGINE": config("DB_ENGINE", default="django.db.backends.postgresql"),
+            "NAME": config("DB_NAME", default="travelgenie"),
+            "USER": config("DB_USER", default="travelgenie"),
+            "PASSWORD": config("DB_PASSWORD", default="travelgenie_secret"),
             "HOST": config("DB_HOST", default="localhost"),
-            "PORT": config("DB_PORT", default="3306"),
-            "OPTIONS": {"charset": "utf8mb4"},
+            "PORT": config("DB_PORT", default="5432"),
         }
     }
 

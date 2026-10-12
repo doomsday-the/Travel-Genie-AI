@@ -90,21 +90,36 @@ class TripCostSummaryView(APIView):
 
 
 class StoredProcBudgetReportView(APIView):
-    """Executes stored procedure sp_trip_budget_summary with ORM fallback."""
+    """Executes stored procedure/function sp_trip_budget_summary with ORM fallback."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, trip_id):
+        # 1. Try PostgreSQL function call
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT category, total, entries FROM sp_trip_budget_summary(%s)",
+                    [trip_id],
+                )
+                results = cursor.fetchall()
+                if results:
+                    data = [{"category": r[0], "total": float(r[1]), "entries": r[2]} for r in results]
+                    return Response({"report": data, "source": "postgres_function"})
+        except Exception:
+            pass
+
+        # 2. Try MySQL stored procedure call
         try:
             with connection.cursor() as cursor:
                 cursor.callproc("sp_trip_budget_summary", [trip_id])
                 results = cursor.fetchall()
                 if results:
                     data = [{"category": r[0], "total": float(r[1]), "entries": r[2]} for r in results]
-                    return Response({"report": data, "source": "stored_procedure"})
+                    return Response({"report": data, "source": "mysql_procedure"})
         except Exception:
             pass
 
-        # Fallback
+        # 3. Robust ORM fallback
         rows = (
             Expense.objects.filter(trip_id=trip_id, trip__user=request.user)
             .values("category")
@@ -112,6 +127,7 @@ class StoredProcBudgetReportView(APIView):
             .order_by("-total")
         )
         return Response({"report": list(rows), "source": "orm_fallback"})
+
 
 
 class AdminAnalyticsView(APIView):

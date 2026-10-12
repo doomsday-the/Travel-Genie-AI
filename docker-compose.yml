@@ -1,16 +1,15 @@
 services:
   db:
-    image: mysql:8
+    image: postgres:16-alpine
     env_file: .env
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-travelgenie}
+      POSTGRES_USER: ${DB_USER:-travelgenie}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-travelgenie_secret}
     volumes:
-      - dbdata:/var/lib/mysql
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "3306:3306"
+      - "5432:5432"
   backend:
     build: ./backend
     env_file: .env
@@ -28,4 +27,4 @@ services:
     depends_on:
       - backend
 volumes:
-  dbdata:
+  pgdata:

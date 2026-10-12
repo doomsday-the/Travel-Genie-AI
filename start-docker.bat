@@ -1,6 +1,6 @@
 @echo off
 echo ========================================================
-echo   TravelGenie AI - Docker Containerized Runner
+echo   TravelGenie AI - Docker PostgreSQL Runner
 echo ========================================================
 echo.
 
@@ -9,17 +9,21 @@ if not exist ".env" (
     copy .env.example .env
 )
 
-echo [Docker] Building and launching containers...
+echo [Docker] Building and launching PostgreSQL & application containers...
 docker-compose up --build -d
 
-echo [Docker] Waiting for database to initialize (10s)...
-timeout /t 10 /nobreak >nul
+echo [Docker] Waiting for PostgreSQL to initialize (8s)...
+timeout /t 8 /nobreak >nul
 
-echo [Docker] Running database migrations...
-docker-compose exec -T backend python manage.py makemigrations accounts destinations trips bookings budget
+echo [Docker] Running Django migrations...
 docker-compose exec -T backend python manage.py migrate
 
-echo [Docker] Loading SQL Views, Procedures, Triggers...
+echo [Docker] Loading PostgreSQL Views, Procedures, Triggers...
+docker-compose exec -T db sh -c "psql -U travelgenie -d travelgenie" < backend/migrations_sql/01_view.sql
+docker-compose exec -T db sh -c "psql -U travelgenie -d travelgenie" < backend/migrations_sql/02_procedure.sql
+docker-compose exec -T db sh -c "psql -U travelgenie -d travelgenie" < backend/migrations_sql/03_trigger.sql
+
+echo [Docker] Seeding database with initial data...
 docker-compose exec -T backend python seed_data.py
 
 echo.

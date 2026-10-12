@@ -23,7 +23,7 @@ chmod +x start-local.sh
 
 ---
 
-### Option B: Containerized Run with Docker Compose (MySQL 8)
+### Option B: Containerized Run with Docker Compose (PostgreSQL 16)
 
 ```bash
 # 1. Copy environment template
@@ -33,7 +33,6 @@ cp .env.example .env
 docker-compose up --build -d
 
 # 3. Apply relational migrations & seed database
-docker-compose exec -T backend python manage.py makemigrations accounts destinations trips bookings budget
 docker-compose exec -T backend python manage.py migrate
 docker-compose exec -T backend python seed_data.py
 ```
@@ -60,10 +59,11 @@ docker-compose exec -T backend python seed_data.py
 | **Frontend** | React 18 (Vite) + React Router v6 | Ultra-fast SPA, responsive mobile-friendly layout |
 | **Maps** | Leaflet + OpenStreetMap | Interactive, 100% free geographic mapping with zero API keys |
 | **Backend** | Django 5 + Django REST Framework | Battle-tested ORM, native Argon2 password hashing, RBAC |
-| **Database** | MySQL 8 (with SQLite local fallback) | 3NF normalized tables, SQL views, stored procedures, triggers |
+| **Database** | PostgreSQL 16 (with SQLite local fallback) | 3NF normalized tables, SQL views, PL/pgSQL procedures, triggers |
 | **Authentication** | JWT (`djangorestframework-simplejwt`) | Token rotation, blacklisting, `/api/auth/me/` RBAC state |
 | **AI Engine** | Google Gemini / Groq API + Fallback | Structured JSON generation saved into normalized database tables |
 | **Live External Data** | Open-Meteo & Free FX API | Live weather forecasts and exchange rates at zero cost |
+
 
 ---
 

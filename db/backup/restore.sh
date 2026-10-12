@@ -2,5 +2,7 @@
 set -euo pipefail
 [ $# -eq 1 ] || { echo "usage: restore.sh <dump.sql>"; exit 1; }
 source "$(dirname "$0")/../../.env"
-mysql -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASSWORD}" "${DB_NAME}" < "$1"
-echo "Restored from $1"
+export PGPASSWORD="${DB_PASSWORD:-travelgenie_secret}"
+
+psql -h "${DB_HOST:-localhost}" -p "${DB_PORT:-5432}" -U "${DB_USER:-travelgenie}" -d "${DB_NAME:-travelgenie}" < "$1"
+echo "PostgreSQL database successfully restored from $1"

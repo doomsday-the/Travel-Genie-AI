@@ -17,7 +17,7 @@
 └───────┬───────────────────┬────────────────────┬───────┘
         │ Django ORM        │                    │
 ┌───────▼────────┐  ┌───────▼───────┐   ┌────────▼───────────────┐
-│ MySQL 8 / 3NF  │  │   LLM API     │   │ External Free Services │
+│ PostgreSQL 16  │  │   LLM API     │   │ External Free Services │
 │ (12 Relational │  │ (Gemini/Groq  │   │ · Open-Meteo Weather   │
 │ Tables + View, │  │ Free Tier)    │   │ · Free FX Currency API │
 │ Proc, Trigger) │  └───────────────┘   │ · OpenStreetMap Tiles  │
@@ -175,22 +175,31 @@ LEFT JOIN expenses e ON e.trip_id = t.id
 GROUP BY t.id, t.title, b.total_amount;
 ```
 
-### 3.2 Stored Procedure: `sp_trip_budget_report(p_trip_id)`
+### 3.2 Stored Procedure / Function: `sp_trip_budget_summary(p_trip_id)`
 Generates category-level expenditure breakdown:
 ```sql
-CREATE PROCEDURE sp_trip_budget_summary(IN p_trip_id BIGINT)
+CREATE OR REPLACE FUNCTION sp_trip_budget_summary(p_trip_id BIGINT)
+RETURNS TABLE (
+    category VARCHAR,
+    total NUMERIC,
+    entries BIGINT
+) LANGUAGE plpgsql AS $$
 BEGIN
-    SELECT e.category, SUM(e.amount) AS total, COUNT(*) AS entries
+    RETURN QUERY
+    SELECT e.category::VARCHAR,
+           COALESCE(SUM(e.amount), 0)::NUMERIC AS total,
+           COUNT(*)::BIGINT AS entries
     FROM expenses e
     WHERE e.trip_id = p_trip_id
     GROUP BY e.category
     ORDER BY total DESC;
 END;
+$$;
 ```
 
 ### 3.3 Triggers: Positive Constraint & Audit Trail
-1. `trg_expense_positive`: Ensures non-negative expenses prior to insertion.
-2. `trg_expense_after_insert`: Verifies spending threshold and writes to `expense_audit_log` when a trip exceeds allocated budget.
+1. `trg_expense_positive`: Ensures non-negative expenses prior to insertion (`fn_trg_expense_positive()`).
+2. `trg_expense_after_insert`: Verifies spending threshold and writes to `expense_audit_log` when a trip exceeds allocated budget (`fn_trg_expense_after_insert()`).
 
 ### 3.4 Atomic Transactions
 When creating a booking via `POST /api/bookings/`, Django performs an atomic transaction (`transaction.atomic()`):
